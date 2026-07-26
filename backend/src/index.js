@@ -516,6 +516,13 @@ app.use((err, _req, res, _next) => {
   return res.status(400).json({ error: err.message });
 });
 
+// Start BullMQ background worker inside the same process when running in production/Render
+if (process.env.NODE_ENV === "production" || process.env.EMBED_WORKER === "true" || process.env.RENDER) {
+  import("./worker.js")
+    .then(() => console.log("👷 In-process BullMQ worker active on Render."))
+    .catch((err) => console.error("⚠️ In-process worker startup warning:", err.message));
+}
+
 app.listen(config.port, () => {
-  console.log(`🚀 NotebookLM Clone Backend Server listening on http://localhost:${config.port}`);
+  console.log(`🚀 NotebookLM Clone Backend Server listening on port ${config.port}`);
 });
