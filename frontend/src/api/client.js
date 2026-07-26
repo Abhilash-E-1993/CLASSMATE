@@ -1,7 +1,21 @@
 import axios from "axios";
 
-const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? "/api" : "https://classmate-9kmj.onrender.com");
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+const RENDER_BACKEND_URL = "https://classmate-9kmj.onrender.com";
+
+let rawApiUrl = import.meta.env.VITE_API_URL;
+let API_BASE_URL = RENDER_BACKEND_URL;
+
+if (isLocal) {
+  API_BASE_URL = rawApiUrl || "/api";
+} else if (rawApiUrl && rawApiUrl !== "/api" && !rawApiUrl.startsWith("/")) {
+  API_BASE_URL = rawApiUrl;
+} else {
+  API_BASE_URL = RENDER_BACKEND_URL;
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
