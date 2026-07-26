@@ -90,7 +90,7 @@ const requireUserAuth = (req, res, next) => {
 };
 
 // --- Health Check ---
-app.get("/health", (_req, res) => res.json({ status: "ok", app: "NotebookLM Clone API" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", app: "NotebookLM Clone API", version: "1.0.1", buildTime: new Date().toISOString() }));
 
 // ==========================================
 // 1. NOTEBOOK ENDPOINTS
