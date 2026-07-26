@@ -1,0 +1,393 @@
+{
+	"info": {
+		"_postman_id": "a9b8c7d6-e5f4-4321-8765-fedcba987654",
+		"name": "NotebookLM Clone API",
+		"description": "Postman Collection for testing NotebookLM Clone Backend (Notebooks, Multi-Source Ingestion: PDF/Text/Web/YouTube/VTT, Citation-Grounded RAG Chat, BullMQ polling)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. System",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Checks if the API server is healthy."
+					},
+					"response": []
+				},
+				{
+					"name": "Poll Job Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/jobs/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["jobs", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Job ID returned by source creation or chat endpoints"
+								}
+							]
+						},
+						"description": "Poll status of indexing or chat worker job."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Notebooks",
+			"item": [
+				{
+					"name": "Create Notebook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Research & AI Notebook\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/notebooks",
+							"host": ["{{baseUrl}}"],
+							"path": ["notebooks"]
+						},
+						"description": "Creates an isolated notebook workspace."
+					},
+					"response": []
+				},
+				{
+					"name": "List Notebooks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notebooks",
+							"host": ["{{baseUrl}}"],
+							"path": ["notebooks"]
+						},
+						"description": "Lists all notebooks."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notebook Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notebooks/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["notebooks", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NOTEBOOK_ID_HERE"
+								}
+							]
+						},
+						"description": "Get single notebook information."
+					},
+					"response": []
+				},
+				{
+					"name": "List Notebook Sources",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notebooks/:id/sources",
+							"host": ["{{baseUrl}}"],
+							"path": ["notebooks", ":id", "sources"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NOTEBOOK_ID_HERE"
+								}
+							]
+						},
+						"description": "Lists all sources belonging to a specific notebook."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notebook",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/notebooks/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["notebooks", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NOTEBOOK_ID_HERE"
+								}
+							]
+						},
+						"description": "Deletes a notebook, its DB records, and purges all its vectors from Qdrant."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Sources (Multi-Source Ingestion)",
+			"item": [
+				{
+					"name": "Add PDF Source",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "notebookId",
+									"value": "NOTEBOOK_ID_HERE",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sources/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", "upload"]
+						},
+						"description": "Uploads a PDF file into a notebook."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Plain Text Source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notebookId\": \"NOTEBOOK_ID_HERE\",\n  \"title\": \"Architecture Notes\",\n  \"text\": \"Transformers use self-attention mechanisms to process sequence data in parallel without recurrence.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sources/text",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", "text"]
+						},
+						"description": "Adds plain text directly into a notebook."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Website URL Source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notebookId\": \"NOTEBOOK_ID_HERE\",\n  \"title\": \"Article on RAG Systems\",\n  \"url\": \"https://en.wikipedia.org/wiki/Retrieval-augmented_generation\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sources/url",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", "url"]
+						},
+						"description": "Scrapes and indexes clean text content from a web page URL."
+					},
+					"response": []
+				},
+				{
+					"name": "Add YouTube Video Source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notebookId\": \"NOTEBOOK_ID_HERE\",\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sources/youtube",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", "youtube"]
+						},
+						"description": "Fetches transcript with timestamps from a YouTube video URL."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Transcript / VTT Source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notebookId\": \"NOTEBOOK_ID_HERE\",\n  \"title\": \"Podcast Transcript\",\n  \"content\": \"WEBVTT\\n\\n00:00:01.000 --> 00:00:05.000\\nWelcome to the Deep Learning lecture.\\n\\n00:00:05.500 --> 00:00:10.000\\nToday we discuss attention mechanisms.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/sources/transcript",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", "transcript"]
+						},
+						"description": "Indexes VTT or raw transcript with timestamp preservation."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Source Details & Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/sources/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "SOURCE_ID_HERE"
+								}
+							]
+						},
+						"description": "Checks status (uploading, indexing, ready, error) and chunk count of a source."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Source",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/sources/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "SOURCE_ID_HERE"
+								}
+							]
+						},
+						"description": "Deletes a source record and purges its vectors from Qdrant."
+					},
+					"response": []
+				},
+				{
+					"name": "Re-index Source",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/sources/:id/reindex",
+							"host": ["{{baseUrl}}"],
+							"path": ["sources", ":id", "reindex"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "SOURCE_ID_HERE"
+								}
+							]
+						},
+						"description": "Re-enqueues indexing for a source."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Chat & Citations",
+			"item": [
+				{
+					"name": "Submit Chat Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notebookId\": \"NOTEBOOK_ID_HERE\",\n  \"query\": \"What are the main concepts covered in these sources?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat"]
+						},
+						"description": "Submits a question to a notebook. Uses multi-query rewriting, HyDE, RRF, and yields citation grounded answers."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chat History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chat/history/:notebookId",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "history", ":notebookId"],
+							"variable": [
+								{
+									"key": "notebookId",
+									"value": "NOTEBOOK_ID_HERE"
+								}
+							]
+						},
+						"description": "Fetches multi-turn message history and stored citations for a notebook."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}
