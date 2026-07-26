@@ -4,16 +4,25 @@ import * as api from "../api/client";
 
 const NotebookContext = createContext(null);
 
-function ClerkTokenSyncer() {
+function ClerkTokenSyncer({ onTokenSynced }) {
   const { isSignedIn, getToken } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
     if (isSignedIn) {
-      getToken().then((token) => api.setAuthToken(token));
+      getToken().then((token) => {
+        if (isMounted) {
+          api.setAuthToken(token);
+          if (onTokenSynced) onTokenSynced();
+        }
+      });
     } else {
       api.setAuthToken(null);
     }
-  }, [isSignedIn, getToken]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isSignedIn, getToken, onTokenSynced]);
 
   return null;
 }
@@ -40,14 +49,20 @@ export function NotebookProvider({ children }) {
       setLoading(true);
       const list = await api.getNotebooks();
       setNotebooks(list);
+      setError(null);
 
       // Auto-select first notebook if none selected
       if (!activeNotebookId && list.length > 0) {
         setActiveNotebookId(list[0].id);
       }
     } catch (err) {
-      console.error("Failed to fetch notebooks:", err);
-      setError(err.message);
+      if (err.response?.status === 401) {
+        // User is not signed in yet or token syncing - set empty list cleanly
+        setNotebooks([]);
+      } else {
+        console.error("Failed to fetch notebooks:", err);
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,7 +78,9 @@ export function NotebookProvider({ children }) {
       const list = await api.getNotebookSources(activeNotebookId);
       setSources(list);
     } catch (err) {
-      console.error("Failed to fetch sources:", err);
+      if (err.response?.status !== 401) {
+        console.error("Failed to fetch sources:", err);
+      }
     }
   }, [activeNotebookId]);
 
@@ -77,7 +94,9 @@ export function NotebookProvider({ children }) {
       const history = await api.getChatHistory(activeNotebookId);
       setMessages(history);
     } catch (err) {
-      console.error("Failed to fetch messages:", err);
+      if (err.response?.status !== 401) {
+        console.error("Failed to fetch messages:", err);
+      }
     }
   }, [activeNotebookId]);
 
@@ -181,7 +200,7 @@ export function NotebookProvider({ children }) {
         handleDeleteSource,
       }}
     >
-      {isClerkConfigured && <ClerkTokenSyncer />}
+      {isClerkConfigured && <ClerkTokenSyncer onTokenSynced={fetchNotebooks} />}
       {children}
     </NotebookContext.Provider>
   );
