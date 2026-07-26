@@ -24,6 +24,8 @@ import {
   sourceIndexingQueue,
   queryQueue,
 } from "./queue.js";
+import { indexSource } from "./indexer.js";
+import { answerChatQuery } from "./retriever.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadDir = path.join(__dirname, "..", "uploads");
@@ -62,18 +64,28 @@ if (process.env.CLERK_SECRET_KEY) {
   app.use(clerkMiddleware());
 }
 
-// Middleware to enforce authentication on protected endpoints
+// Middleware to handle user authentication cleanly (allows guest workspace access unless REQUIRE_AUTH=true)
 const requireUserAuth = (req, res, next) => {
-  if (!process.env.CLERK_SECRET_KEY) {
-    return next();
+  const isAuthStrict = process.env.REQUIRE_AUTH === "true";
+
+  if (process.env.CLERK_SECRET_KEY) {
+    try {
+      const auth = getAuth(req);
+      if (auth && auth.userId) {
+        req.userId = auth.userId;
+        return next();
+      }
+    } catch (e) {
+      console.warn("Clerk JWT verification warning:", e.message);
+    }
   }
 
-  const auth = getAuth(req);
-  if (!auth || !auth.userId) {
+  if (isAuthStrict) {
     return res.status(401).json({ error: "Unauthorized: Please sign in to access workspace data" });
   }
 
-  req.userId = auth.userId;
+  // Guest access allowed when REQUIRE_AUTH is false or unset
+  req.userId = "guest";
   next();
 };
 
@@ -441,16 +453,30 @@ app.post("/chat", requireUserAuth, async (req, res) => {
     const notebook = await getNotebook(notebookId);
     if (!notebook) return res.status(404).json({ error: "Notebook not found" });
 
-    const job = await enqueueChatJob({
-      notebookId,
-      query: query.trim(),
-    });
+    try {
+      const job = await enqueueChatJob({
+        notebookId,
+        query: query.trim(),
+      });
 
-    return res.status(202).json({
-      message: "Chat query queued",
-      jobId: job.id,
-      poll: `/jobs/${job.id}`,
-    });
+      return res.status(202).json({
+        message: "Chat query queued",
+        jobId: job.id,
+        poll: `/jobs/${job.id}`,
+      });
+    } catch (queueErr) {
+      console.warn("⚠️ [Queue Fallback] Enqueue failed, executing chat query directly in-process:", queueErr.message);
+      const result = await answerChatQuery({
+        notebookId,
+        query: query.trim(),
+      });
+
+      return res.status(200).json({
+        message: "Chat query completed",
+        status: "completed",
+        result,
+      });
+    }
   } catch (err) {
     console.error("Failed to enqueue chat job:", err);
     return res.status(500).json({ error: "Failed to queue chat query" });

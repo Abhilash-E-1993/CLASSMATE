@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { qdrant } from "./qdrant.js";
+import { safeVectorSearch } from "./qdrant.js";
 import { openai, embedTexts } from "./openai.js";
 import { getOrCreateConversation, getMessagesForNotebook, saveMessage } from "./db/index.js";
 
@@ -88,20 +88,9 @@ export async function hydeDocument(query) {
   return completion.choices[0]?.message?.content?.trim() ?? "";
 }
 
-/** Search Qdrant for vectors strictly matching notebookId. */
+/** Search Qdrant (or memory store fallback) for vectors strictly matching notebookId. */
 async function searchByVector(vector, notebookId) {
-  const filter = notebookId
-    ? {
-        must: [{ key: "notebookId", match: { value: notebookId } }],
-      }
-    : undefined;
-
-  return qdrant.search(config.qdrant.collection, {
-    vector,
-    filter,
-    limit: config.retrieval.topK,
-    with_payload: true,
-  });
+  return safeVectorSearch(config.qdrant.collection, vector, notebookId, config.retrieval.topK);
 }
 
 /**

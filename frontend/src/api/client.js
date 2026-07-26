@@ -126,6 +126,7 @@ export async function getJobStatus(jobId) {
  * @param {number} maxAttempts
  */
 export async function pollJobUntilComplete(jobId, intervalMs = 1500, maxAttempts = 60) {
+  if (!jobId) return null;
   let attempts = 0;
 
   while (attempts < maxAttempts) {

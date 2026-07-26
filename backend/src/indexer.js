@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { config } from "./config.js";
-import { qdrant, ensureCollection } from "./qdrant.js";
+import { safeVectorUpsert, ensureCollection } from "./qdrant.js";
 import { embedTexts } from "./openai.js";
 import { updateSourceStatus } from "./db/index.js";
 import { extractPdfText } from "./extractors/pdfExtractor.js";
@@ -190,8 +190,8 @@ export async function indexSource({ sourceId, notebookId, type, filePath, url, c
       },
     }));
 
-    // Upsert into Qdrant
-    await qdrant.upsert(collection, { wait: true, points });
+    // Upsert into Qdrant (or memory fallback)
+    await safeVectorUpsert(collection, points);
 
     // Update SQLite status to ready
     await updateSourceStatus(sourceId, "ready", { chunkCount: chunksWithMeta.length });
