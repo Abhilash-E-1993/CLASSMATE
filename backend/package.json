@@ -11,7 +11,8 @@
     "start": "node src/index.js",
     "worker": "node src/worker.js",
     "services:up": "docker compose up -d",
-    "services:down": "docker compose down"
+    "services:down": "docker compose down",
+    "postinstall": "npm rebuild sqlite3 --build-from-source"
   },
   "dependencies": {
     "@clerk/express": "^2.1.46",
@@ -26,7 +27,7 @@
     "multer": "^2.0.1",
     "openai": "^4.77.0",
     "pdf-parse": "^1.1.1",
-    "sqlite3": "^6.0.1",
+    "sqlite3": "^5.1.7",
     "youtube-transcript": "^1.3.1"
   }
 }
