@@ -246,20 +246,25 @@ app.post("/sources/url", requireUserAuth, async (req, res) => {
     const notebook = await getNotebook(notebookId);
     if (!notebook) return res.status(404).json({ error: "Notebook not found" });
 
-    const sourceTitle = (title && title.trim()) || url;
+    let targetUrl = url.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = `https://${targetUrl}`;
+    }
+
+    const sourceTitle = (title && title.trim()) || targetUrl;
 
     const source = await createSource({
       notebookId,
       type: "website",
       title: sourceTitle,
-      url: url.trim(),
+      url: targetUrl,
     });
 
     const job = await enqueueSourceIndexingJob({
       sourceId: source.id,
       notebookId,
       type: "website",
-      url: url.trim(),
+      url: targetUrl,
       title: sourceTitle,
     });
 

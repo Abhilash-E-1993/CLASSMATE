@@ -13,6 +13,14 @@ export const connection = {
 export const sourceIndexingQueue = new Queue(SOURCE_INDEXING_QUEUE, { connection });
 export const queryQueue = new Queue(QUERY_QUEUE, { connection });
 
+// Register error listeners to log Redis connection issues gracefully without crashing
+sourceIndexingQueue.on("error", (err) => {
+  console.error("⚠️ [source-indexing-queue] Redis error:", err.message);
+});
+queryQueue.on("error", (err) => {
+  console.error("⚠️ [query-queue] Redis error:", err.message);
+});
+
 /**
  * Enqueue a source indexing job (PDF, text, website, youtube, transcript).
  * @param {{ sourceId: string, notebookId: string, type: string, filePath?: string, url?: string, content?: string, title?: string }} payload
