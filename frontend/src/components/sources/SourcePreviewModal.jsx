@@ -65,7 +65,7 @@ export function SourcePreviewModal({ source, isOpen, onClose }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="p-3.5 rounded-xl bg-gray-950 border border-gray-800/80">
                 <span className="text-[10px] uppercase font-semibold text-gray-500 font-mono block mb-1">Status</span>
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
+                <span className={`inline-flex items-center gap-1 text-xs font-bold ${source.status === "ready" ? "text-emerald-400" : source.status === "error" ? "text-red-400" : "text-amber-400"}`}>
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span className="capitalize">{source.status}</span>
                 </span>
@@ -87,6 +87,13 @@ export function SourcePreviewModal({ source, isOpen, onClose }) {
                 </span>
               </div>
             </div>
+
+            {source.errorMessage && (
+              <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 space-y-1">
+                <span className="font-mono font-bold uppercase tracking-wider block text-red-400">Indexing Failure Reason</span>
+                <p className="font-mono text-[11px] leading-relaxed break-words">{source.errorMessage}</p>
+              </div>
+            )}
 
             {/* External Links / Location */}
             {source.url && (

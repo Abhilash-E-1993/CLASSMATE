@@ -47,12 +47,12 @@ export const config = {
   dbPath: process.env.DB_PATH || path.join(__dirname, "..", "data", "app.db"),
   redis: getRedisConfig(),
   qdrant: {
-    url: process.env.QDRANT_URL || "http://127.0.0.1:6333",
-    apiKey: process.env.QDRANT_API_KEY || undefined,
+    url: (process.env.QDRANT_URL || "http://127.0.0.1:6333").trim().replace(/\/+$/, ""),
+    apiKey: process.env.QDRANT_API_KEY ? process.env.QDRANT_API_KEY.trim() : undefined,
     collection: process.env.QDRANT_COLLECTION || "documents",
   },
   openai: {
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.trim() : undefined,
     // text-embedding-3-small -> 1536 dims, text-embedding-3-large -> 3072 dims
     embeddingModel: process.env.EMBEDDING_MODEL || "text-embedding-3-small",
     embeddingDimensions: Number(process.env.EMBEDDING_DIMENSIONS) || 1536,
