@@ -4,15 +4,48 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const config = {
-  port: Number(process.env.PORT) || 8000,
-  dbPath: process.env.DB_PATH || path.join(__dirname, "..", "data", "app.db"),
-  redis: {
+function getRedisConfig() {
+  const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL;
+  if (redisUrl) {
+    try {
+      const parsed = new URL(redisUrl);
+      return {
+        host: parsed.hostname,
+        port: Number(parsed.port) || 6379,
+        password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+        tls: parsed.protocol === "rediss:" ? {} : undefined,
+      };
+    } catch (e) {
+      console.warn("Failed to parse REDIS_URL:", e.message);
+    }
+  }
+
+  const upstashRestUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashRestToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (upstashRestUrl) {
+    const host = upstashRestUrl
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
+    return {
+      host,
+      port: Number(process.env.REDIS_PORT) || 6379,
+      password: upstashRestToken || process.env.REDIS_PASSWORD || undefined,
+      tls: {},
+    };
+  }
+
+  return {
     host: process.env.REDIS_HOST || "127.0.0.1",
     port: Number(process.env.REDIS_PORT) || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     tls: process.env.REDIS_TLS === "true" ? {} : undefined,
-  },
+  };
+}
+
+export const config = {
+  port: Number(process.env.PORT) || 8000,
+  dbPath: process.env.DB_PATH || path.join(__dirname, "..", "data", "app.db"),
+  redis: getRedisConfig(),
   qdrant: {
     url: process.env.QDRANT_URL || "http://127.0.0.1:6333",
     apiKey: process.env.QDRANT_API_KEY || undefined,
